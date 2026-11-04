@@ -136,7 +136,13 @@ function mk(el,items,key,label){
   items.forEach(it=>{const v=Array.isArray(it)?it[0]:it;const b=document.createElement("button");b.className="chip";b.textContent=label?label(it):v;
     b.setAttribute("aria-pressed",S[key].includes(v));b.onclick=()=>{toggle(S[key],v);b.setAttribute("aria-pressed",S[key].includes(v));upd()};el.appendChild(b)});
 }
-function renderChips(){mk($("roots"),ROOTS,"roots");mk($("types"),TYPES,"types",t=>"C"+(t[0]||"")===("C")?"Major":("C"+t[0]));mk($("progs"),PROGS,"progs");renderCustom();mk($("keys"),ROOTS,"keys")}
+function renderChips(){
+  mk($("roots"),ROOTS,"roots");
+  mk($("types"),TYPES,"types",t=>t[0]||"Major");
+  mk($("progs"),PROGS,"progs");
+  renderCustom();
+  mk($("keys"),ROOTS,"keys");
+}
 function renderEvery(){const el=$("every");el.innerHTML="";EVERY.forEach(([n,sub,b])=>{const x=document.createElement("button");x.className="chip";
   x.innerHTML=n+"<small>"+sub+"</small>";x.setAttribute("aria-pressed",S.every===b);x.onclick=()=>{S.every=b;renderEvery();upd()};el.appendChild(x)})}
 const pool=()=>S.roots.flatMap(r=>S.types.map(t=>({r,t})));
