@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chord Cards</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b2a6b">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&display=swap">
+<style>
+:root{--bg:#e8ecf8;--ink:#14183a;--mute:#5b6291;--card:#fff;--line:#c9d0ee;--accent:#2b44d6;--onacc:#fff;--beat:#ff9f1c;--chip:#f4f6fd;
+color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1230;--ink:#eef0ff;--mute:#9aa2d6;--card:#1a2050;--line:#2e3670;--accent:#7b8fff;--onacc:#0e1230;--chip:#141a42;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1230;--ink:#eef0ff;--mute:#9aa2d6;--card:#1a2050;--line:#2e3670;--accent:#7b8fff;--onacc:#0e1230;--chip:#141a42;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 18px 40px}
+h1{font-size:28px;margin:4px 0 2px;font-weight:800;letter-spacing:-.02em}
+p.sub{margin:0 0 18px;color:var(--mute)}
+h2{font-size:16px;margin:22px 0 8px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-weight:700;border:2px solid var(--line);background:var(--chip);color:var(--ink);border-radius:12px;padding:9px 13px;min-width:46px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--onacc)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.link{font:inherit;background:none;border:0;color:var(--accent);font-weight:700;padding:6px 4px;cursor:pointer}
+.bpm{display:flex;align-items:center;gap:12px}
+.bpm .big{font-size:40px;font-weight:800;min-width:96px;text-align:center}
+.bpm .big small{font-size:14px;color:var(--mute);font-weight:500;margin-left:2px}
+.step{font:inherit;font-size:24px;width:48px;height:48px;border-radius:14px;border:2px solid var(--line);background:var(--chip);color:var(--ink);cursor:pointer}
+input[type=range]{flex:1;accent-color:var(--accent);height:32px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg .chip{padding:12px 8px;text-align:center}
+.seg small{display:block;font-weight:500;opacity:.8}
+.pool{color:var(--mute);margin:16px 0 0}
+.go{margin-top:12px;width:100%;font:inherit;font-size:20px;font-weight:800;padding:16px;border:0;border-radius:16px;background:var(--accent);color:var(--onacc);cursor:pointer}
+.go:disabled{opacity:.4}
+button:focus-visible{outline:3px solid var(--beat);outline-offset:2px}
+#play{display:none;min-height:100vh;min-height:100dvh;flex-direction:column;padding:0}
+body.playing #setup{display:none}
+body.playing #play{display:flex}
+.top{display:flex;justify-content:space-between;align-items:center;padding:6px 0 12px}
+.top span{color:var(--mute);font-weight:500}
+.card{flex:1;background:var(--card);border:2px solid var(--line);border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-shadow:0 6px 0 var(--line);margin-bottom:18px;max-height:62vh}
+.card.flip{animation:flip .22s ease-out}
+@keyframes flip{from{transform:translateY(10px) scale(.97);opacity:.4}to{transform:none;opacity:1}}
+#name{font-size:clamp(64px,24vw,132px);font-weight:800;letter-spacing:-.04em;line-height:1}
+#name sup{font-size:.5em;font-weight:700;vertical-align:baseline;position:relative;top:-.55em;margin-left:.04em}
+.next{margin-top:22px;color:var(--mute);font-size:18px}
+.next b{color:var(--ink)}
+body.hidenext .next{visibility:hidden}
+.meta{color:var(--mute);font-size:18px;min-height:24px;margin-bottom:10px;font-weight:500;text-align:center}
+.in{font:inherit;width:100%;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--chip);color:var(--ink);margin-bottom:8px}
+.hint{color:var(--mute);font-size:14px;margin:8px 0}
+.err{color:#d6336c;font-size:14px;min-height:18px;margin-top:6px}
+.crow{display:flex;align-items:center;gap:6px;margin-top:8px}
+.dots{display:flex;gap:12px;justify-content:center;margin:2px 0 18px}
+.dot{width:20px;height:20px;border-radius:50%;background:var(--line)}
+.dot.on{background:var(--beat);transform:scale(1.25)}
+.dot.first.on{background:var(--accent)}
+.stop{width:100%;font:inherit;font-size:18px;font-weight:800;padding:15px;border-radius:16px;border:2px solid var(--line);background:var(--chip);color:var(--ink);cursor:pointer}
+@media(prefers-reduced-motion:reduce){.card.flip{animation:none}}
+</style>
+</head>
+<body>
+<main id="setup">
+  <h1>Chord Cards</h1>
+  <p class="sub">Pick your chords, set the tempo, and play along.</p>
+
+  <h2>Mode</h2>
+  <div class="seg" id="mode" style="grid-template-columns:repeat(2,1fr)"></div>
+  <div id="randSec">
+  <h2>Roots</h2>
+  <div class="chips" id="roots"></div>
+  <div class="row"><button class="link" id="rAll">Select all</button><button class="link" id="rNone">Clear</button></div>
+
+  <h2>Chord types</h2>
+  <div class="chips" id="types"></div>
+  <div class="row"><button class="link" id="tBasic">Basic</button><button class="link" id="tJazz">Jazz</button></div>
+  </div>
+  <div id="progSec" hidden>
+  <h2>Progressions</h2>
+  <div class="chips" id="progs"></div>
+  <div id="customList"></div>
+  <h2>Add your own</h2>
+  <input class="in" id="pText" placeholder="ii7 V7 Imaj7" aria-label="Progression in roman numerals" autocapitalize="off" autocomplete="off" spellcheck="false">
+  <input class="in" id="pName" placeholder="Name (optional)" aria-label="Progression name" autocomplete="off">
+  <button class="chip" id="addProg">Add progression</button>
+  <div class="err" id="pErr"></div>
+  <div class="hint">Use roman numerals: capitals are major, lowercase are minor. Add 7, maj7, ø, dim, sus4, ♭ or ♯ as needed, for example ♭VII or iiø7.</div>
+  <h2>Keys</h2>
+  <div class="chips" id="keys"></div>
+  <div class="row"><button class="link" id="kAll">Select all</button><button class="link" id="kNone">Clear</button></div>
+  <h2>Repeat each key</h2>
+  <div class="seg" id="loops"></div>
+  </div>
+
+  <h2>Tempo</h2>
+  <div class="bpm">
+    <button class="step" id="bm" aria-label="Slower">−</button>
+    <div class="big"><span id="bpmv">80</span><small>BPM</small></div>
+    <button class="step" id="bp" aria-label="Faster">+</button>
+    <input type="range" id="bpm" min="40" max="200" value="80" aria-label="Tempo in BPM">
+  </div>
+
+  <h2>Change chord every</h2>
+  <div class="seg" id="every"></div>
+
+  <h2>Options</h2>
+  <div class="chips" id="opts"></div>
+  <p class="pool" id="pool"></p>
+  <button class="go" id="start">Start</button>
+</main>
+
+<main id="play">
+  <div class="top"><span id="info"></span><span id="count"></span></div>
+  <div class="card" id="card">
+    <div class="meta" id="meta"></div>
+    <div id="name">C</div>
+    <div class="next">Next: <b id="nxt">–</b></div>
+  </div>
+  <div class="dots" id="dots"></div>
+  <button class="stop" id="stop">Stop</button>
+</main>
+
+<script>
+const ROOTS=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
+const TYPES=[["","maj"],["m","m"],["7","7"],["maj7","maj7"],["m7","m7"],["m7♭5","m7♭5"],["dim","dim"],["sus2","sus2"],["sus4","sus4"],["6","6"],["9","9"],["add9","add9"]];
+const EVERY=[["Whole note","4 beats",4],["Half note","2 beats",2],["Quarter note","1 beat",1]];
+const $=id=>document.getElementById(id);
+let S={roots:["C","F","G","A","D","E"],types:["","m"],bpm:80,every:4,mode:"random",progs:["ii–V–I","I–V–vi–IV"],keys:["C","G","F"],loops:1,custom:[],countIn:false,hideNext:false};
+try{const s=JSON.parse(localStorage.getItem("chordcards")||"null");if(s&&s.roots&&s.types)S=Object.assign(S,s)}catch(e){}
+const save=()=>{try{localStorage.setItem("chordcards",JSON.stringify(S))}catch(e){}};
+
+function toggle(arr,v){const i=arr.indexOf(v);i<0?arr.push(v):arr.splice(i,1)}
+function mk(el,items,key,label){
+  el.innerHTML="";
+  items.forEach(it=>{const v=Array.isArray(it)?it[0]:it;const b=document.createElement("button");b.className="chip";b.textContent=label?label(it):v;
+    b.setAttribute("aria-pressed",S[key].includes(v));b.onclick=()=>{toggle(S[key],v);b.setAttribute("aria-pressed",S[key].includes(v));upd()};el.appendChild(b)});
+}
+function renderChips(){mk($("roots"),ROOTS,"roots");mk($("types"),TYPES,"types",t=>"C"+(t[0]||"")===("C")?"Major":("C"+t[0]));mk($("progs"),PROGS,"progs");renderCustom();mk($("keys"),ROOTS,"keys")}
+function renderEvery(){const el=$("every");el.innerHTML="";EVERY.forEach(([n,sub,b])=>{const x=document.createElement("button");x.className="chip";
+  x.innerHTML=n+"<small>"+sub+"</small>";x.setAttribute("aria-pressed",S.every===b);x.onclick=()=>{S.every=b;renderEvery();upd()};el.appendChild(x)})}
+const pool=()=>S.roots.flatMap(r=>S.types.map(t=>({r,t})));
+const PROGS=[
+["I–IV–V–I",0,[[0,"","I"],[5,"","IV"],[7,"","V"],[0,"","I"]]],
+["I–V–vi–IV",0,[[0,"","I"],[7,"","V"],[9,"m","vi"],[5,"","IV"]]],
+["I–vi–IV–V",0,[[0,"","I"],[9,"m","vi"],[5,"","IV"],[7,"","V"]]],
+["vi–IV–I–V",0,[[9,"m","vi"],[5,"","IV"],[0,"","I"],[7,"","V"]]],
+["ii–V–I",0,[[2,"m7","ii"],[7,"7","V"],[0,"maj7","I"]]],
+["I–vi–ii–V",0,[[0,"maj7","I"],[9,"m7","vi"],[2,"m7","ii"],[7,"7","V"]]],
+["Minor ii–V–i",1,[[2,"m7♭5","ii"],[7,"7","V"],[0,"m7","i"]]],
+["12-bar blues",0,[[0,"7","I"],[0,"7","I"],[0,"7","I"],[0,"7","I"],[5,"7","IV"],[5,"7","IV"],[0,"7","I"],[0,"7","I"],[7,"7","V"],[5,"7","IV"],[0,"7","I"],[7,"7","V"]]]
+];
+function setBpm(v){S.bpm=Math.max(40,Math.min(200,v|0));$("bpm").value=S.bpm;$("bpmv").textContent=S.bpm;save()}
+function upd(){const pm=S.mode==="prog";$("randSec").hidden=pm;$("progSec").hidden=!pm;const n=pm?S.progs.length*S.keys.length:pool().length;$("pool").textContent=n?(pm?S.progs.length+" progression"+(S.progs.length>1?"s":"")+" in "+S.keys.length+" key"+(S.keys.length>1?"s":""):n+" chord"+(n>1?"s":"")+" in your deck"):(pm?"Pick at least one progression and one key.":"Pick at least one root and one type.");
+  $("start").disabled=n<1;save()}
+$("rAll").onclick=()=>{S.roots=[...ROOTS];renderChips();upd()};
+$("rNone").onclick=()=>{S.roots=[];renderChips();upd()};
+$("tBasic").onclick=()=>{S.types=["","m"];renderChips();upd()};
+$("tJazz").onclick=()=>{S.types=["maj7","m7","7","m7♭5"];renderChips();upd()};
+$("kAll").onclick=()=>{S.keys=[...ROOTS];renderChips();upd()};
+$("kNone").onclick=()=>{S.keys=[];renderChips();upd()};
+function renderMode(){const el=$("mode");el.innerHTML="";[["random","Random chords"],["prog","Progressions"]].forEach(([v,n])=>{const b=document.createElement("button");b.className="chip";b.textContent=n;b.setAttribute("aria-pressed",S.mode===v);b.onclick=()=>{S.mode=v;renderMode();upd()};el.appendChild(b)})}
+function renderOpts(){const el=$("opts");el.innerHTML="";[["countIn","Count-in (1 bar)"],["hideNext","Hide next chord"]].forEach(([k,n])=>{const b=document.createElement("button");b.className="chip";b.textContent=n;b.setAttribute("aria-pressed",S[k]);b.onclick=()=>{S[k]=!S[k];b.setAttribute("aria-pressed",S[k]);save()};el.appendChild(b)})}
+$("bpm").oninput=e=>setBpm(+e.target.value);
+$("bm").onclick=()=>setBpm(S.bpm-1);$("bp").onclick=()=>setBpm(S.bpm+1);
+
+/* ---- Player ---- */
+let ctx,timer,raf,nextT,beat,deck,cur,nxt,queue=[],playing=false,shown=0;
+const label=c=>{const t=c.t;const m=t.match(/^(m7♭5|maj7|dim|sus2|sus4|add9|m7|m|7|9|6)?$/);
+  if(!t)return c.r;if(t==="m")return c.r+"m";return c.r+"<sup>"+t+"</sup>"};
+const plain=c=>c.r+c.t;
+function pick(){const p=pool();if(p.length===1)return p[0];let c;do{c=p[Math.floor(Math.random()*p.length)]}while(cur&&plain(c)===plain(cur));return c}
+const SH=["G","D","A","E","B","F♯","C♯"],SHARP=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"],FLAT=["C","D♭","D","E♭","E","F","G♭","G","A♭","A","B♭","B"];
+let seq=[],lastKey=null,loopsLeft=0,curP=null,curK=null;
+const NUM={I:0,II:2,III:4,IV:5,V:7,VI:9,VII:11};
+function parseProg(text){
+  const toks=text.trim().split(/[\s,|–—-]+/).filter(Boolean);if(!toks.length||toks.length>16)return null;
+  const steps=[];
+  for(const t of toks){
+    const m=t.match(/^([b♭#♯]?)([ivIV]+)(.*)$/);if(!m)return null;
+    const up=m[2].toUpperCase();if(!(up in NUM))return null;
+    let o=NUM[up]+(/[b♭]/.test(m[1])?-1:/[#♯]/.test(m[1])?1:0);o=(o+12)%12;
+    const lower=m[2][0]===m[2][0].toLowerCase();
+    const s=m[3].replace(/b/g,"♭").replace(/#/g,"♯");let type;
+    if(/^ø/.test(s))type="m7♭5";
+    else if(/^°/.test(s))type="dim"+s.slice(1);
+    else if(/^(maj|M)/.test(s))type="maj"+s.replace(/^(maj|M)/,"");
+    else if(/^(dim|sus|add)/.test(s))type=s;
+    else type=(lower?"m":"")+s;
+    steps.push([o,type,m[1].replace("b","♭").replace("#","♯")+m[2]]);
+  }
+  return steps;
+}
+function allProgs(){return PROGS.concat(S.custom.map(c=>{const st=parseProg(c.text);return st?[c.name,0,st]:null}).filter(Boolean))}
+function renderCustom(){const el=$("customList");el.innerHTML="";S.custom.forEach(c=>{
+  const r=document.createElement("div");r.className="crow";
+  const b=document.createElement("button");b.className="chip";b.textContent=c.name;b.setAttribute("aria-pressed",S.progs.includes(c.name));
+  b.onclick=()=>{toggle(S.progs,c.name);b.setAttribute("aria-pressed",S.progs.includes(c.name));upd()};
+  const x=document.createElement("button");x.className="link";x.textContent="Remove";x.setAttribute("aria-label","Remove "+c.name);
+  x.onclick=()=>{S.custom=S.custom.filter(k=>k!==c);S.progs=S.progs.filter(n=>n!==c.name);renderCustom();upd()};
+  r.append(b,x);el.appendChild(r)})}
+$("addProg").onclick=()=>{
+  const text=$("pText").value.trim(),err=$("pErr");
+  const st=text&&parseProg(text);
+  if(!st){err.textContent="Couldn’t read that. Use roman numerals like ii7 V7 Imaj7 (up to 16 chords).";return}
+  const name=($("pName").value.trim()||text.split(/[\s,|–—-]+/).filter(Boolean).join("–")).slice(0,30);
+  if(allProgs().some(p=>p[0]===name)){err.textContent="That name is already used. Add a different name.";return}
+  S.custom.push({name,text});S.progs.push(name);$("pText").value="";$("pName").value="";err.textContent="";renderChips();upd()};
+function renderLoops(){const el=$("loops");el.innerHTML="";[1,2,4].forEach(n=>{const b=document.createElement("button");b.className="chip";b.textContent=n+"×";b.setAttribute("aria-pressed",S.loops===n);b.onclick=()=>{S.loops=n;renderLoops();save()};el.appendChild(b)})}
+function newProg(){
+  let key,p;if(loopsLeft>0&&curP&&curK){loopsLeft--;key=curK;p=curP}else{const ks=S.keys.length>1?S.keys.filter(k=>k!==lastKey):S.keys;key=ks[Math.floor(Math.random()*ks.length)];lastKey=key;const ap=allProgs(),sel=S.progs.map(n=>ap.find(x=>x[0]===n)).filter(Boolean);p=sel[Math.floor(Math.random()*sel.length)];curK=key;curP=p;loopsLeft=S.loops-1}const pass=S.loops-loopsLeft;
+  
+  const sharp=p[1]?["E","A","B","F♯","C♯"].includes(key):SH.includes(key);const names=sharp?SHARP:FLAT;const base=ROOTS.indexOf(key);
+  seq=p[2].map(([o,t,rn],i)=>({r:names[(base+o)%12],t,rn,info:p[0]+" in "+key+(S.loops>1?" · round "+pass+"/"+S.loops:""),i:i+1,n:p[2].length}));
+}
+function take(){if(S.mode!=="prog")return pick();if(!seq.length)newProg();return seq.shift()}
+function click(t,accent){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=accent?1500:1000;o.type="square";
+  g.gain.setValueAtTime(accent?.35:.2,t);g.gain.exponentialRampToValueAtTime(.001,t+.05);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.06)}
+function sched(){
+  while(nextT<ctx.currentTime+.12){
+    const pos=beat<0?-1:beat%S.every,bar=((beat%4)+4)%4===0;
+    click(nextT,bar);
+    queue.push({t:nextT,pos,bar,change:pos===0,ci:beat<0?beat+5:0});
+    beat++;nextT+=60/S.bpm;
+  }
+}
+function show(c,n){$("name").innerHTML=label(c);$("meta").textContent=c.info?c.rn+"  ·  "+c.info+" ("+c.i+"/"+c.n+")":"";$("nxt").textContent=plain(n);
+  const k=$("card");k.classList.remove("flip");void k.offsetWidth;k.classList.add("flip")}
+function frame(){
+  if(!playing)return;
+  while(queue.length&&queue[0].t<=ctx.currentTime){
+    const e=queue.shift();
+    if(e.ci){$("name").textContent=e.ci;$("meta").textContent="Count-in"}
+    if(e.change){cur=nxt||take();nxt=take();show(cur,nxt);shown++;$("count").textContent=shown+" played"}
+    const ds=$("dots").children;for(let i=0;i<ds.length;i++)ds[i].classList.toggle("on",i===e.pos);
+  }
+  raf=requestAnimationFrame(frame);
+}
+async function start(){
+  ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+  try{await ctx.resume()}catch(e){}
+  const every=EVERY.find(e=>e[2]===S.every);
+  $("info").textContent=S.bpm+" BPM · "+every[0].toLowerCase()+"s";
+  const d=$("dots");d.innerHTML="";for(let i=0;i<S.every;i++){const x=document.createElement("div");x.className="dot"+(i===0?" first":"");d.appendChild(x)}
+  cur=null;seq=[];lastKey=null;loopsLeft=0;curP=null;curK=null;queue=[];beat=S.countIn?-4:0;shown=0;$("count").textContent="";$("name").textContent="…";$("meta").textContent="";nxt=take();$("nxt").textContent=plain(nxt);document.body.classList.toggle("hidenext",S.hideNext);
+  nextT=ctx.currentTime+.6;playing=true;document.body.classList.add("playing");
+  timer=setInterval(sched,25);raf=requestAnimationFrame(frame);
+  try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(l=>{window._wl=l}).catch(()=>{})}catch(e){}
+}
+function stop(){playing=false;clearInterval(timer);cancelAnimationFrame(raf);document.body.classList.remove("playing");
+  try{window._wl&&window._wl.release()}catch(e){}}
+$("start").onclick=start;$("stop").onclick=stop;
+document.addEventListener("keydown",e=>{if(e.code==="Escape"&&playing)stop();if(e.code==="Space"&&playing){e.preventDefault();stop()}});
+
+renderChips();renderEvery();renderMode();renderLoops();renderOpts();setBpm(S.bpm);upd();
+</script>
+</body>
+</html>
