@@ -57,6 +57,10 @@ body.hidenext .next{visibility:hidden}
 .dot.on{background:var(--beat);transform:scale(1.25)}
 .dot.first.on{background:var(--accent)}
 .stop{width:100%;font:inherit;font-size:18px;font-weight:800;padding:15px;border-radius:16px;border:2px solid var(--line);background:var(--chip);color:var(--ink);cursor:pointer}
+.btns{display:flex;gap:10px}
+.btns .stop{flex:1;width:auto}
+.pause{background:var(--accent);border-color:var(--accent);color:var(--onacc)}
+body.paused .card{opacity:.5}
 @media(prefers-reduced-motion:reduce){.card.flip{animation:none}}
 </style>
 </head>
@@ -118,7 +122,7 @@ body.hidenext .next{visibility:hidden}
     <div class="next">Next: <b id="nxt">–</b></div>
   </div>
   <div class="dots" id="dots"></div>
-  <button class="stop" id="stop">Stop</button>
+  <div class="btns"><button class="stop pause" id="pause">Pause</button><button class="stop" id="stop">Stop</button></div>
 </main>
 
 <script>
@@ -253,10 +257,18 @@ async function start(){
   timer=setInterval(sched,25);raf=requestAnimationFrame(frame);
   try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(l=>{window._wl=l}).catch(()=>{})}catch(e){}
 }
-function stop(){playing=false;clearInterval(timer);cancelAnimationFrame(raf);document.body.classList.remove("playing");
+function stop(){setPaused(false);playing=false;clearInterval(timer);cancelAnimationFrame(raf);document.body.classList.remove("playing");
   try{window._wl&&window._wl.release()}catch(e){}}
-$("start").onclick=start;$("stop").onclick=stop;
-document.addEventListener("keydown",e=>{if(e.code==="Escape"&&playing)stop();if(e.code==="Space"&&playing){e.preventDefault();stop()}});
+let paused=false;
+async function setPaused(p){
+  if(!ctx||paused===p)return;
+  paused=p;
+  document.body.classList.toggle("paused",p);
+  $("pause").textContent=p?"Resume":"Pause";
+  try{if(p)await ctx.suspend();else await ctx.resume()}catch(e){}
+}
+$("start").onclick=start;$("stop").onclick=stop;$("pause").onclick=()=>setPaused(!paused);
+document.addEventListener("keydown",e=>{if(e.code==="Escape"&&playing)stop();if(e.code==="Space"&&playing){e.preventDefault();setPaused(!paused)}});
 
 renderChips();renderEvery();renderMode();renderLoops();renderOpts();setBpm(S.bpm);upd();
 </script>
