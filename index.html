@@ -7,7 +7,6 @@
 <meta name="theme-color" content="#1b2a6b">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&display=swap">
 <style>
-  
 :root{--bg:#e8ecf8;--ink:#14183a;--mute:#5b6291;--card:#fff;--line:#c9d0ee;--accent:#2b44d6;--onacc:#fff;--beat:#ff9f1c;--chip:#f4f6fd;
 color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1230;--ink:#eef0ff;--mute:#9aa2d6;--card:#1a2050;--line:#2e3670;--accent:#7b8fff;--onacc:#0e1230;--chip:#141a42;color-scheme:dark}}
@@ -38,13 +37,19 @@ button:focus-visible{outline:3px solid var(--beat);outline-offset:2px}
 #play{display:none;min-height:100vh;min-height:100dvh;flex-direction:column;padding:0}
 body.playing #setup{display:none}
 body.playing #play{display:flex}
+#flash{display:none;min-height:100vh;min-height:100dvh;flex-direction:column;padding:0}
+body.flashing #setup{display:none}
+body.flashing #flash{display:flex}
+#fNext{margin:0 0 10px}
+.rsum{color:var(--mute)}
+#mode .chip{padding:10px 4px;font-size:15px;min-width:0}
 .top{display:flex;justify-content:space-between;align-items:center;padding:6px 0 12px}
 .top span{color:var(--mute);font-weight:500}
 .card{flex:1;background:var(--card);border:2px solid var(--line);border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-shadow:0 6px 0 var(--line);margin-bottom:18px;max-height:62vh}
 .card.flip{animation:flip .22s ease-out}
 @keyframes flip{from{transform:translateY(10px) scale(.97);opacity:.4}to{transform:none;opacity:1}}
-#name{font-size:clamp(64px,24vw,132px);font-weight:800;letter-spacing:-.04em;line-height:1}
-#name sup{font-size:.5em;font-weight:700;vertical-align:baseline;position:relative;top:-.55em;margin-left:.04em}
+#name,#fname{font-size:clamp(64px,24vw,132px);font-weight:800;letter-spacing:-.04em;line-height:1}
+#name sup,#fname sup{font-size:.5em;font-weight:700;vertical-align:baseline;position:relative;top:-.55em;margin-left:.04em}
 .next{margin-top:22px;color:var(--mute);font-size:18px}
 .next b{color:var(--ink)}
 body.hidenext .next{visibility:hidden}
@@ -71,15 +76,17 @@ body.paused .card{opacity:.5}
   <p class="sub">Pick your chords, set the tempo, and play along.</p>
 
   <h2>Mode</h2>
-  <div class="seg" id="mode" style="grid-template-columns:repeat(2,1fr)"></div>
+  <div class="seg" id="mode" style="grid-template-columns:repeat(3,1fr)"></div>
   <div id="randSec">
-  <h2>Roots</h2>
-  <div class="chips" id="roots"></div>
-  <div class="row"><button class="link" id="rAll">Select all</button><button class="link" id="rNone">Clear</button></div>
-
   <h2>Chord types</h2>
   <div class="chips" id="types"></div>
   <div class="row"><button class="link" id="tBasic">Basic</button><button class="link" id="tJazz">Jazz</button></div>
+  <h2>Roots</h2>
+  <div class="row"><span class="rsum" id="rootsSum"></span><button class="link" id="rToggle">Change</button></div>
+  <div id="rootsBox" hidden>
+  <div class="chips" id="roots"></div>
+  <div class="row"><button class="link" id="rAll">Select all</button><button class="link" id="rNone">Clear</button></div>
+  </div>
   </div>
   <div id="progSec" hidden>
   <h2>Progressions</h2>
@@ -98,6 +105,7 @@ body.paused .card{opacity:.5}
   <div class="seg" id="loops"></div>
   </div>
 
+  <div id="tempoSec">
   <h2>Tempo</h2>
   <div class="bpm">
     <button class="step" id="bm" aria-label="Slower">−</button>
@@ -111,6 +119,7 @@ body.paused .card{opacity:.5}
 
   <h2>Options</h2>
   <div class="chips" id="opts"></div>
+  </div>
   <p class="pool" id="pool"></p>
   <button class="go" id="start">Start</button>
 </main>
@@ -126,12 +135,19 @@ body.paused .card{opacity:.5}
   <div class="btns"><button class="stop pause" id="pause">Pause</button><button class="stop" id="stop">Stop</button></div>
 </main>
 
+<main id="flash">
+  <div class="top"><span>Flashcards</span><span id="fcount"></span></div>
+  <div class="card" id="fcard"><div id="fname">C</div></div>
+  <button class="go" id="fNext">Next chord →</button>
+  <button class="stop" id="fExit">Exit</button>
+</main>
+
 <script>
 const ROOTS=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
 const TYPES=[["","maj"],["m","m"],["7","7"],["maj7","maj7"],["m7","m7"],["m7♭5","m7♭5"],["dim","dim"],["sus2","sus2"],["sus4","sus4"],["6","6"],["9","9"],["add9","add9"]];
 const EVERY=[["Whole note","4 beats",4],["Half note","2 beats",2],["Quarter note","1 beat",1]];
 const $=id=>document.getElementById(id);
-let S={roots:["C","F","G","A","D","E"],types:["","m"],bpm:80,every:4,mode:"random",progs:["ii–V–I","I–V–vi–IV"],keys:["C","G","F"],loops:1,custom:[],countIn:false,hideNext:false};
+let S={roots:[...ROOTS],types:["","m"],bpm:80,every:4,mode:"random",progs:["ii–V–I","I–V–vi–IV"],keys:["C","G","F"],loops:1,custom:[],countIn:false,hideNext:false};
 try{const s=JSON.parse(localStorage.getItem("chordcards")||"null");if(s&&s.roots&&s.types)S=Object.assign(S,s)}catch(e){}
 const save=()=>{try{localStorage.setItem("chordcards",JSON.stringify(S))}catch(e){}};
 
@@ -143,7 +159,7 @@ function mk(el,items,key,label){
 }
 function renderChips(){
   mk($("roots"),ROOTS,"roots");
-  mk($("types"),TYPES,"types",t=>t[0]||"Major");
+  mk($("types"),TYPES,"types",t=>t[1]);
   mk($("progs"),PROGS,"progs");
   renderCustom();
   mk($("keys"),ROOTS,"keys");
@@ -162,7 +178,7 @@ const PROGS=[
 ["12-bar blues",0,[[0,"7","I"],[0,"7","I"],[0,"7","I"],[0,"7","I"],[5,"7","IV"],[5,"7","IV"],[0,"7","I"],[0,"7","I"],[7,"7","V"],[5,"7","IV"],[0,"7","I"],[7,"7","V"]]]
 ];
 function setBpm(v){S.bpm=Math.max(40,Math.min(200,v|0));$("bpm").value=S.bpm;$("bpmv").textContent=S.bpm;save()}
-function upd(){const pm=S.mode==="prog";$("randSec").hidden=pm;$("progSec").hidden=!pm;const n=pm?S.progs.length*S.keys.length:pool().length;$("pool").textContent=n?(pm?S.progs.length+" progression"+(S.progs.length>1?"s":"")+" in "+S.keys.length+" key"+(S.keys.length>1?"s":""):n+" chord"+(n>1?"s":"")+" in your deck"):(pm?"Pick at least one progression and one key.":"Pick at least one root and one type.");
+function upd(){const pm=S.mode==="prog",fm=S.mode==="flash";$("randSec").hidden=pm;$("progSec").hidden=!pm;$("tempoSec").hidden=fm;$("rootsSum").textContent=S.roots.length===12?"All 12 roots":S.roots.length+" of 12 roots";const n=pm?S.progs.length*S.keys.length:pool().length;$("pool").textContent=n?(pm?S.progs.length+" progression"+(S.progs.length>1?"s":"")+" in "+S.keys.length+" key"+(S.keys.length>1?"s":""):n+" chord"+(n>1?"s":"")+" in your deck"+(fm?" · no metronome":"")):(pm?"Pick at least one progression and one key.":"Pick at least one root and one type.");
   $("start").disabled=n<1;save()}
 $("rAll").onclick=()=>{S.roots=[...ROOTS];renderChips();upd()};
 $("rNone").onclick=()=>{S.roots=[];renderChips();upd()};
@@ -170,7 +186,7 @@ $("tBasic").onclick=()=>{S.types=["","m"];renderChips();upd()};
 $("tJazz").onclick=()=>{S.types=["maj7","m7","7","m7♭5"];renderChips();upd()};
 $("kAll").onclick=()=>{S.keys=[...ROOTS];renderChips();upd()};
 $("kNone").onclick=()=>{S.keys=[];renderChips();upd()};
-function renderMode(){const el=$("mode");el.innerHTML="";[["random","Random chords"],["prog","Progressions"]].forEach(([v,n])=>{const b=document.createElement("button");b.className="chip";b.textContent=n;b.setAttribute("aria-pressed",S.mode===v);b.onclick=()=>{S.mode=v;renderMode();upd()};el.appendChild(b)})}
+function renderMode(){const el=$("mode");el.innerHTML="";[["random","Random"],["prog","Progressions"],["flash","Flashcards"]].forEach(([v,n])=>{const b=document.createElement("button");b.className="chip";b.textContent=n;b.setAttribute("aria-pressed",S.mode===v);b.onclick=()=>{S.mode=v;renderMode();upd()};el.appendChild(b)})}
 function renderOpts(){const el=$("opts");el.innerHTML="";[["countIn","Count-in (1 bar)"],["hideNext","Hide next chord"]].forEach(([k,n])=>{const b=document.createElement("button");b.className="chip";b.textContent=n;b.setAttribute("aria-pressed",S[k]);b.onclick=()=>{S[k]=!S[k];b.setAttribute("aria-pressed",S[k]);save()};el.appendChild(b)})}
 $("bpm").oninput=e=>setBpm(+e.target.value);
 $("bm").onclick=()=>setBpm(S.bpm-1);$("bp").onclick=()=>setBpm(S.bpm+1);
@@ -268,8 +284,16 @@ async function setPaused(p){
   $("pause").textContent=p?"Resume":"Pause";
   try{if(p)await ctx.suspend();else await ctx.resume()}catch(e){}
 }
-$("start").onclick=start;$("stop").onclick=stop;$("pause").onclick=()=>setPaused(!paused);
-document.addEventListener("keydown",e=>{if(e.code==="Escape"&&playing)stop();if(e.code==="Space"&&playing){e.preventDefault();setPaused(!paused)}});
+let fcur=null,fcount=0;
+function fNextChord(){const p=pool();if(!p.length)return;let c;do{c=p[Math.floor(Math.random()*p.length)]}while(p.length>1&&fcur&&plain(c)===plain(fcur));
+  fcur=c;fcount++;$("fname").innerHTML=label(c);$("fcount").textContent=fcount+" shown";
+  const k=$("fcard");k.classList.remove("flip");void k.offsetWidth;k.classList.add("flip")}
+function fStart(){fcur=null;fcount=0;document.body.classList.add("flashing");fNextChord()}
+function fExit(){document.body.classList.remove("flashing")}
+$("fNext").onclick=fNextChord;$("fExit").onclick=fExit;
+$("rToggle").onclick=()=>{const b=$("rootsBox");b.hidden=!b.hidden;$("rToggle").textContent=b.hidden?"Change":"Done"};
+$("start").onclick=()=>S.mode==="flash"?fStart():start();$("stop").onclick=stop;$("pause").onclick=()=>setPaused(!paused);
+document.addEventListener("keydown",e=>{const fl=document.body.classList.contains("flashing");if(fl){if(e.code==="Escape")fExit();if(e.code==="Space"||e.code==="ArrowRight"){e.preventDefault();fNextChord()}return}if(e.code==="Escape"&&playing)stop();if(e.code==="Space"&&playing){e.preventDefault();setPaused(!paused)}});
 
 renderChips();renderEvery();renderMode();renderLoops();renderOpts();setBpm(S.bpm);upd();
 </script>
